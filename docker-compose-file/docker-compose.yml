@@ -1,0 +1,173 @@
+#root@mrp-web:~/.cloudflared#  cat docker-compose.yml
+version: '2.4'
+services:
+# Portainer-CE : Docker Managed GUI
+  portainer:
+    image: portainer/portainer-ce:2.11.1
+    container_name: portainer
+    volumes:
+      - ./portainer/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    networks:
+      maceno1:
+        ipv4_address: 192.168.200.126
+
+# Code-Server
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jakarta
+      - PASSWORD=Cadet123 #optional
+      - SUDO_PASSWORD=Cadet123 #optional
+      # - PROXY_DOMAIN=code-server.my.domain #optional
+      - DEFAULT_WORKSPACE=/config/workspace #optional
+    volumes:
+    # jangan bind-mount / (root) sebagai config, akan me-replace owner system (root) ke user (1000)
+      - /opt/config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker-compose:/usr/bin/docker-compose
+    restart: unless-stopped
+    networks:
+      maceno1:
+        ipv4_address: 192.168.200.125
+
+# Guacamole : Remote Desktop/CLI Gateway
+  guacd:
+    image: guacamole/guacd
+    container_name: guacd
+    networks:
+      - maceno1
+    restart: always
+    # network_mode: "host"
+
+  guacamole:
+    container_name: gcm
+    image: guacamole/guacamole
+    networks:
+      - maceno1
+    container_name: guacamole
+    # network_mode: "host"
+    restart: always
+    environment:
+      - MYSQL_DATABASE=guacamole
+      - MYSQL_USER=guacamole
+      - MYSQL_PASSWORD=guacapass
+      - MYSQL_HOSTNAME=mysql
+      - GUACD_HOSTNAME=guacd
+    #  - GUACD_PORT=4822
+
+# Uptime Kuma : Monitoring Network
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    networks:
+      - maceno1
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma:/app/data
+    # network_mode: "host"
+
+# PostgreSQL Database
+  postgres:
+    # image: postgres:9.5
+    image: postgres:alpine
+    container_name: postgres
+    # network_mode: "host"
+    networks:
+      - maceno1
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgres/data
+    environment:
+      - POSTGRES_PASSWORD=Cadet123
+
+# MySQL / MariaDB
+  mysql:
+    image: mariadb:10.6
+    restart: always
+    container_name: mysql
+    networks:
+      - maceno1
+    # network_mode: "host"
+    volumes:
+      - mydata:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=Cadet123
+
+# Adminer : PHP GUI for Database Backend
+  adminer:
+    image: adminer:4.8.1
+    container_name: adminer
+    # network_mode: "host"
+    restart: always
+    networks:
+      - maceno1
+
+# Heimdall Dashboard
+  heimdall:
+    image: linuxserver/heimdall
+    container_name: heimdall
+    networks:
+      - maceno1
+    restart: always
+    volumes:
+      - heimdall_data:/config
+
+# Nginx Proxy Manager
+  npm:
+    image: jc21/nginx-proxy-manager
+    container_name: npm
+    restart: always
+    networks:
+      - maceno1
+    environment:
+      DB_MYSQL_HOST: "mysql"
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: "npm"
+      DB_MYSQL_PASSWORD: "npm123"
+      DB_MYSQL_NAME: "npm"
+    volumes:
+      - ./npm/data:/data
+      - ./npm/ssl:/etc/letsencrypt
+
+# Dashy Dashboard
+  # dashy:
+  #   image: lissy93/dashy
+  #   container_name: dashy
+  #   restart: always
+  #   networks:
+  #     - maceno1
+  #   environment:
+  #     - NODE_ENV=production
+
+# Volumes
+volumes:
+  pg_data:
+  mydata:
+  portainer_data:
+  uptime_kuma:
+  heimdall_data:
+
+
+# Networks
+networks:
+  default:
+    maceno1:
+      name: maceno1
+      driver: macvlan
+      driver_opts:
+        parent: enp1s0
+      ipam:
+        config:
+          - subnet: 192.168.200.0/24
+            gateway: 192.168.200.254
+            ip_range: 192.168.200.0/25
+          - subnet: 10.1.1.0/24
+            gateway: 10.1.1.1
+            ip_range: 10.1.1.128/25
+          - subnet: 192.168.4.0/24
+            gateway: 192.168.4.254
