@@ -341,7 +341,110 @@ jobs:
         git push
 ```
 
+### Adapt checkout
+
+ref parameter dari [actions/checkout](#) harus di set ke head ref pada [pull request](#) ke checkout feature branch dan jadikan last commit message:
+
+```yaml
+- uses: actions/checkout@v3
+  with:
+    ref: ${{ github.event.pull_request.head.ref }}
+```
+
+> tetap dapat digunakan pada event push, karena event.pull_request.head.ref akan kosong, dan menggunakan default value.
+
+### Detect commit message dan author dg git log
+
+```sh
+git --no-pager log -1 --pretty=format:'%s' # prints the message of the last commit
+git --no-pager log -2 --pretty=format:'%an' # prints the author name of the last commit
+```
+berikut step utk menambahkan commit message & author ke linux env var pada linux/unix shell:
+
+```yaml
+- name: Set environment variable "commit-message"
+  run: echo "commit-message=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+- name: Set environment variable "commit-author"
+  run: echo "commit-author=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+```
+
+tambahkan optional display step utk debugging dan maintenance:
+
+```yaml
+
+```
+- name: Display environment variable "commit-message"
+  run: echo "commit-message=${{ env.commit-message }}"
+- name: Display environment variable "commit-author"
+  run: echo "commit-author=${{ env.commit-author }}"
 ...
+
+## Example4
+
+```yaml
+name: Continuous Integration
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env: 
+      CI_COMMIT_MESSAGE: Continuous Integration Build Artifacts
+      CI_COMMIT_AUTHOR: ${{ github.event.repository.name }} Continuous Integration
+    steps:
+
+    # Checkout that works with "push" and "pull_request" trigger event
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+        token: ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }}
+
+    # Set environment variables based on the last commit
+    - name: Set environment variable "commit-message"
+      run: echo "commit-message=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+    - name: Display environment variable "commit-message"
+      run: echo "commit-message=${{ env.commit-message }}"
+
+    - name: Set environment variable "commit-author"
+      run: echo "commit-author=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+    - name: Display environment variable "commit-author"
+      run: echo "commit-author=${{ env.commit-author }}"
+
+    - name: Set environment variable "is-auto-commit"
+      if: env.commit-message == env.CI_COMMIT_MESSAGE && env.commit-author == env.CI_COMMIT_AUTHOR
+      run: echo "is-auto-commit=true" >> $GITHUB_ENV
+    - name: Display environment variable "is-auto-commit"
+      run: echo "is-auto-commit=${{ env.is-auto-commit }}"
+
+    # Build
+    - uses: actions/setup-node@v3
+      if: env.is-auto-commit == false
+      with:
+        node-version: '12'
+    - name: (Main) Install nodes packages
+      if: env.is-auto-commit == false
+      run: npm ci
+    - name: (Main) Build package (lint, test, doc, build, package)
+      if: env.is-auto-commit == false
+      run: npm run package
+    
+    # Commit generated and commit files
+    - name: Display event name 
+      run: echo "github.event_name=${{ github.event_name }}"
+    - name: Commit build artifacts (dist, devdist, docs, coverage)
+      # Don't run again on already pushed auto commit. Don't run on pull request events.
+      if: env.is-auto-commit == false && github.event_name != 'pull_request'
+      run: |
+        git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+        git config --global user.email "username@users.noreply.github.com"
+        git commit -a -m "${{ env.CI_COMMIT_MESSAGE }}"
+        git push
+```
 
 source: [lebih dalam dengan github actions, by joht.github.io](https://joht.github.io/johtizen/build/2022/01/20/github-actions-push-into-repository.html#example-1)
 
