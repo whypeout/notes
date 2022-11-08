@@ -50,6 +50,47 @@ usahakan untuk membuat key untuk masing-masing repository.
    ...
    -------END OPENSSH PRIVATE KEY-------
    ```
+# Complete `.github/workflow/ci.yml`
+
+```yaml
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: pandoc/latex
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install mustache (to update the date)
+        run:  apk add ruby && gem install mustache
+      - name: creates output
+        run:  sh ./build.sh
+      - name: debugging (files are kept between steps)
+        run: pwd; ls -l
+      - name: Pushes to another repository
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: output/
+          destination-github-username: 'cpina'
+          destination-repository-name: 'push-to-another-repository-output'
+          user-email: carles3@pina.cat
+          commit-message: See ORIGIN_COMMIT from $GITHUB_REF
+          target-branch: main
+      - name: Test get variable exported by push-to-another-repository
+        run: echo $DESTINATION_CLONED_DIRECTORY
+```
+
 
 SOURCE:  
 - [cpina - push to another repository](https://cpina.github.io/push-to-another-repository-docs/setup-using-ssh-deploy-keys.html)
