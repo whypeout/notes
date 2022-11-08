@@ -26,3 +26,15 @@ Daily ChangeLogs:
 ### 15-10-2022
 
 11. Data Stok Komputer Sales & PPIC. *2
+
+...
+
+### 07-11-2022
+
+
+
+### 08-11-2022
+
+1. Disk Space Hosting Panel Newton.CO.ID Penuh, Bertha tidak bisa email.
+2. Mouse Ica Sales, sering mati. batre habis, ganti batre.
+3. PC Vivi Finance, Bluescreen, tidak bisa booting. cabut/pindahkan port SATA & Power SSD
