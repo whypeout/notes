@@ -38,3 +38,17 @@ Daily ChangeLogs:
 1. Disk Space Hosting Panel Newton.CO.ID Penuh, Bertha tidak bisa email.
 2. Mouse Ica Sales, sering mati. batre habis, ganti batre.
 3. PC Vivi Finance, Bluescreen, tidak bisa booting. cabut/pindahkan port SATA & Power SSD
+
+### 10-11-2022
+
+1. Email Server Penuh
+2. Data Laptop SMM
+
+
+### 11-11-2022
+
+1. CS tidak bisa kirim email, Email Server Penuh
+2. Uplink Ether4 10mbps cabut colok
+3. Install Adobe CS Laptop HP Silver Nanda
+4. Internet FA, Restart AP HQNewton
+5. Remote Customer SCBD w mas Taufik, tidak bisa Scan to Email
