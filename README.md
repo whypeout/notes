@@ -52,3 +52,7 @@ Daily ChangeLogs:
 3. Install Adobe CS Laptop HP Silver Nanda
 4. Internet FA, Restart AP HQNewton
 5. Remote Customer SCBD w mas Taufik, tidak bisa Scan to Email
+
+### 12-11-2022
+
+1. PMI Donor Darah ULTAH NEWTON #21
