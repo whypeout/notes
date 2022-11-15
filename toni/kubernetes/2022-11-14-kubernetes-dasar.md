@@ -363,4 +363,414 @@ docker build -t kompose https://github.com/kubernetes/kompose.git
 docker run --rm -it -v $PWD:/opt kompose sh -c "cd /opt && kompose convert"
 ```
 
+5. Samba share
+
+menjalankan samba server in-cluster.
+
+```yaml
+# stacks/samba/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+secretGenerator:
+  - name: smbcredentials
+    envs:
+    - auth.env
+
+resources:
+  - deployment.yaml
+  - service.yaml
+---
+# stacks/samba/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: smb-server
+spec:
+  ports:
+    - port: 445
+      protocol: TCP
+      name: smb
+  selector:
+    app: smb-server
+---
+# stacks/samba/deployment.yaml
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: smb-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smb-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: smb-server
+      labels:
+        app: smb-server
+    spec:
+      volumes:
+        - name: smb-volume
+          hostPath:
+            path: /zpool/shares/smb
+            type: DirectoryOrCreate
+      containers:
+        - name: smb-server
+          image: dperson/samba
+          args: [
+            "-u",
+            "$(USERNAME1);$(PASSWORD1)",
+            "-u",
+            "$(USERNAME2);$(PASSWORD2)",
+            "-s",
+            # name;path;browsable;read-only;guest-allowed;users;admins;writelist;comment
+            "share;/smbshare/;yes;no;no;all;$(USERNAME1);;mainshare",
+            "-p"
+          ]
+          env:
+            - name: PERMISSIONS
+              value: "0777"
+            - name: USERNAME1
+              valueFrom:
+                secretKeyRef:
+                  name: smbcredentials
+                  key: username1
+            - name: PASSWORD1
+              valueFrom:
+                secretKeyRef:
+                  name: smbcredentials
+                  key: password1
+            - name: USERNAME2
+              valueFrom:
+                secretKeyRef:
+                  name: smbcredentials
+                  key: username2
+            - name: PASSWORD2
+              valueFrom:
+                secretKeyRef:
+                  name: smbcredentials
+                  key: password2
+          volumeMounts:
+            - mountPath: /smbshare
+              name: smb-volume
+          ports:
+            - containerPort: 445
+              hostPort: 445
+```
+
+kita tidak pakai Persistent Volume dan Claim, hanya direct `hostPath`. dg `type: DirectoryOrCreate` utk membuat directory jika blm ada.
+
+kita pakai docker image dari [dperson/samba](https://github.com/dperson/samba) yg bisa setting share dg mudah. kita buat single share, dg 2 user (username1 sbg admin share). username & password dari file berikut.
+
+auth file:
+
+```
+# stacks/samba/auth.env
+username1=alice
+password1=foo
+
+username2=bob
+password2=bar
+```
+
+jalankan stack ke cluster
+
+```
+kubectl apply -k stacks/samba
+```
+
+6. BookStack
+
+contoh convert docker-compose.yml menggunakan Kompose ke K8s, kita pakai BookStack, sebuah wiki app.
+
+```
+#original docker-compose.yml
+version: '2'
+services:
+  mysql:
+    image: mysql:5.7.33
+    environment:
+    - MYSQL_ROOT_PASSWORD=secret
+    - MYSQL_DATABASE=bookstack
+    - MYSQL_USER=bookstack
+    - MYSQL_PASSWORD=secret
+    volumes:
+    - mysql-data:/var/lib/mysql
+    ports:
+    - 3306:3306
+
+  bookstack:
+    image: solidnerd/bookstack:21.05.2
+    depends_on:
+    - mysql
+    environment:
+    - DB_HOST=mysql:3306
+    - DB_DATABASE=bookstack
+    - DB_USERNAME=bookstack
+    - DB_PASSWORD=secret
+    volumes:
+    - uploads:/var/www/bookstack/public/uploads
+    - storage-uploads:/var/www/bookstack/storage/uploads
+    ports:
+    - "8080:8080"
+
+volumes:
+ mysql-data:
+ uploads:
+ storage-uploads:
+```
+
+convert dg Kompose:
+
+```
+> kompose convert -f bookstack-original-compose.yaml
+WARN Unsupported root level volumes key - ignoring
+WARN Unsupported depends_on key - ignoring
+INFO Kubernetes file "bookstack-service.yaml" created
+INFO Kubernetes file "mysql-service.yaml" created
+INFO Kubernetes file "bookstack-deployment.yaml" created
+INFO Kubernetes file "uploads-persistentvolumeclaim.yaml" created
+INFO Kubernetes file "storage-uploads-persistentvolumeclaim.yaml" created
+INFO Kubernetes file "mysql-deployment.yaml" created
+INFO Kubernetes file "mysql-data-persistentvolumeclaim.yaml" created
+```
+
+kompose tidak support `depends_on` dan `volumes`. kita akan fix nanti.
+
+```yaml
+# stacks/bookstack/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - bookstack-build.yaml
+```
+
+```yaml
+# stacks/bookstack/bookstack-build.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: bookstack
+  name: bookstack
+spec:
+  ports:
+  - name: bookstack-port
+    port: 10000
+    targetPort: 8080
+  - name: bookstack-db-port
+    port: 10001
+    targetPort: 3306
+  selector:
+    io.kompose.service: bookstack
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bookstack-storage-uploads-pv
+spec:
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: >-
+      /zpool/volumes/bookstack/storage-uploads
+    type: DirectoryOrCreate
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-path
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    io.kompose.service: bookstack-storage-uploads-pvc
+  name: bookstack-storage-uploads-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+  volumeName: bookstack-storage-uploads-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bookstack-uploads-pv
+spec:
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: >-
+      /zpool/volumes/bookstack/uploads
+    type: DirectoryOrCreate
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-path
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    io.kompose.service: bookstack-uploads-pvc
+  name: bookstack-uploads-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+  volumeName: bookstack-uploads-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bookstack-mysql-data-pv
+spec:
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: >-
+      /zpool/volumes/bookstack/mysql-data
+    type: DirectoryOrCreate
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-path
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    io.kompose.service: bookstack-mysql-data-pvc
+  name: bookstack-mysql-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+  volumeName: bookstack-mysql-data-pv
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bookstack-config
+  namespace: default
+data:
+  DB_DATABASE: bookstack
+  DB_HOST: bookstack:10001
+  DB_PASSWORD: secret
+  DB_USERNAME: bookstack
+  APP_URL: https://bookstack.domain.tld
+  MAIL_DRIVER: smtp
+  MAIL_ENCRYPTION: SSL
+  MAIL_FROM: user@domain.tld
+  MAIL_HOST: smtp.domain.tld
+  MAIL_PASSWORD: vewyvewysecretpassword
+  MAIL_PORT: "465"
+  MAIL_USERNAME: user@domain.tld
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bookstack-mysql-config
+  namespace: default
+data:
+  MYSQL_DATABASE: bookstack
+  MYSQL_PASSWORD: secret
+  MYSQL_ROOT_PASSWORD: secret
+  MYSQL_USER: bookstack
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: bookstack
+  name: bookstack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: bookstack
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: bookstack
+    spec:
+      containers:
+      - name: bookstack
+        image: reddexx/bookstack:21112
+        securityContext:
+          allowPrivilegeEscalation: false
+        envFrom:
+        - configMapRef:
+            name: bookstack-config
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: bookstack-uploads-pv
+          mountPath: /var/www/bookstack/public/uploads
+        - name: bookstack-storage-uploads-pv
+          mountPath: /var/www/bookstack/storage/uploads
+      - name: mysql
+        image: mysql:5.7.33
+        envFrom:
+        - configMapRef:
+            name: bookstack-mysql-config
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: bookstack-mysql-data-pv
+      volumes:
+      - name: bookstack-uploads-pv
+        persistentVolumeClaim:
+          claimName: bookstack-uploads-pvc
+      - name: bookstack-storage-uploads-pv
+        persistentVolumeClaim:
+          claimName: bookstack-storage-uploads-pvc
+      - name: bookstack-mysql-data-pv
+        persistentVolumeClaim:
+          claimName: bookstack-mysql-data-pvc
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookstack-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  rules:
+    - host: bookstack.domain.tld
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bookstack
+                port:
+                  name: bookstack-port
+  tls:
+    - hosts:
+      - bookstack.domain.tld
+      secretName: bookstack-staging-secret-tls
+```
+
 
