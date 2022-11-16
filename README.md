@@ -56,3 +56,14 @@ Daily ChangeLogs:
 ### 12-11-2022
 
 1. PMI Donor Darah ULTAH NEWTON #21
+
+### 14-11-2022
+
+1. Tim DM Swab
+
+### 15-11-2022
+
+1. Cek laptop rusak, cari ram DDR3 yg OK => None
+2. Cek Laptop Asus Putih, udah bisa nyala lagi
+
+### 16-11-2022
