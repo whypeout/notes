@@ -179,10 +179,58 @@ kubectl run cluster-tester -it --rm --restart=Never image=busybox:1.28
 #or kubectl run cluster-tester -it --rm --restart=Never --image=gcr.io/kubernetes-e2e-test-images/dnsutils:1.3
 nslookup kubernetes.default
 nslookup my-nginx.default.svc.cluster.local
-wget -qS0- 
+wget -qS0- my-nginx.default.svc.cluster.local
+#for dnsutils: wget -q0- my-nginx.default.svc.cluster.local
+exit
 
+# custom configuration, optional; klo kita deploy & expose web server dg `kubectl apply`
+kubectl create deployment --image nginx:latest my-nginx --dry-run=client -o yaml
+kubectl expose deployment my-nginx --port=80 --dry-run=client -o yaml
+# output sama dg:
+kubectl run my-nginx --image=nginx --port=80 --expose=true --dry-run=client -o yaml
+
+# publish web server; expose http route from outside to kubernetes my-nginx service
+cat <<EOT >> /tmp/mysite.yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mysite-nginx-ingress
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /my-nginx
+        pathType: Prefix
+        backend:
+          service:
+            name: my-nginx
+            port:
+              number: 80
+EOT
+kubectl apply -f /tmp/mysite.yaml
+curl $(hostname --fqdn)/my-nginx
+
+# scaling web server
+kubectl scale --replicas=3 deployment/my-nginx
+kubectl get deployment/my-nginx -o wide
+# Wait until deployment.apps/my-nginx READY is not 3/3
+
+
+# cleanup web server; semua resources yg dibuat dari `kubectl apply -f` bisa didelete dg command berikut:
+kubectl delete -f /tmp/mysite.yaml
+# hapus resources yg tersisa
+kubectl delete ingress/mysite-nginx-ingress
+kubectl delete service/my-nginx
+kubectl delete deployment/my-nginx
+
+# Uninstall k3s
+/usr/local/bin/k3s-uninstall.sh
+sudo rm -rf /var/lib/rancher/k3s/ /etc/rancher/k3s
 ```
-
 
 # Install Portainer
 
@@ -227,6 +275,7 @@ sudo docker ps
 
 1. download k3s from [https://github.com/k3s-io/k3s/releases/latest](https://github.com/k3s-io/k3s/releases/latest)
 2. run the server
+
 ```
 sudo k3s server &
 # kubeconfig /etc/rancher/k3s/k3s.yaml
