@@ -291,6 +291,36 @@ spec path `/mydog` memberitahu traefik utk route semua incoming req dg req path 
 annotation baru `PathPrefixStrip`, memberitahu Traefik utk strip off prefix `/mydog` sebelum kirim req ke `mydog-nginx-service`.
 untungnya, mydog-nginx app tidak expect prefix. 
 
+skrg kita deploy mydog.yaml
+
+```
+kubectl apply -f mydog.yaml
+```
+
+kita coba dg akses ke [http://kmaster/mydog/](http://kmaster/mydog/)
+
+![img](https://opensource.com/sites/default/files/uploads/mydog.jpg)
+
+jadi sekarang kita punya sebuah cluster k3s dg 2 web site hosting dg traefik utk routing, berbasis pathname, ke service mana utk pass req. kita tidak membatasi routing berbasis path. kita bisa pake hostname-based routing juga.
+
+web yg kita hosting adl standard unencrypted HTML. hari ini semua situs menggunakan enkripsi SSL/TLS.
+
+## Cleanup
+
+hapus web yg sudah di deploy
+
+```
+kubectl delete -f mysite.yaml
+kubectl delete -f mydog.yaml
+
+kubectl delete configmap mysite-html
+kubectl delete configmap mydog-html
+
+kubectl get pods
+No resources found in default namespace.
+```
+
+
 
 
 
