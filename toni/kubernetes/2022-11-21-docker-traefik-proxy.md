@@ -72,7 +72,7 @@ whoami:
 ```
 
 - `traefik.enable=true` memberitahu traefik utk expose service ini
-- `traefik.http.routers.whoami.rule=Host(\`whoami.localhost\`)` rule utk match req ke service ini. kita pakai router nama `whoami`, kita pakai matcher Host dg hostname `whoami.localhost`. ada matcher lain spt path, kita akan bahas nanti.
+- `traefik.http.routers.whoami.rule=Host("whoami.localhost")` rule utk match req ke service ini. kita pakai router nama `whoami`, kita pakai matcher Host dg hostname `whoami.localhost`. ada matcher lain spt path, kita akan bahas nanti.
 - `traefik.http.routers.whoami.entrypoints=web` entrypoint yg digunakan oleh service `whoami`
 
 kita bisa buat multiple routers utk setiap container, cukup rubah `router name` (unique)
@@ -81,7 +81,7 @@ kita bisa buat multiple routers utk setiap container, cukup rubah `router name` 
 docker-compose up -d
 ```
 
-> kita rubah service labels whoami `Host(\`localhost\`)`
+> kita rubah service labels whoami `Host("localhost")`
 
 ![img](https://accesto.com/blog/static/7eb6ab185fc62eeab514354aea010c30/9cab2/proxied-service.png)
 ![dashboard](https://accesto.com/blog/static/6c05e8f28f0288c8489d335637bc4035/e6c84/traefik-dashboard.png)
@@ -122,6 +122,102 @@ whoami2:
 ```
 
 ![hasil](https://accesto.com/blog/static/81b45ffd40fc1f8a9cdc84274c0da0f4/3c492/traefik-path-routing.png)
+
+- kita pakai image berbeda utk serve service HTTP lain
+- kita buat dg nama baru, `whoami2`
+- kita tambah rule route `&& Path("/whoami2")`. jadi harus match hostname `localhost` dan match path `whoami2`, jika hanya perlu path prefix cukup pakai `PathPrefix("/whoami2")`
+
+## SSL Encryption
+
+kita kadang perlu thin layer antara app dan client, utk mempermudah pembuatan & update certificate. letsencrypt cukup bagus, tapi dg task utk expose docker service dg cepat perlu beberapa trik.
+
+traefik punya resolver certificate bawaan.kita hanya perlu menyebutkan resolver/provider yg akan digunakan utk menghandle semua cert yg diperlukan. jadi jika kita punya instance traefik yg sudah running dan menambahkan domain `accessto.com` ke salah satu container - traefik akan memanggil resolver secara otomatis. contoh kita pakai letsencrypt, LE akan fetch certificate utk kita.
+
+```
+version: '3.3'
+services: 
+  traefik:
+    image: traefik:v2.6
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443" #1
+      - "--certificateresolvers.myresolver.acme.tlschallenge=true" #2
+      - "--certiificateresolvers.myresolver.acme.email=your@email.com" #3
+      - "--certificateresolvers.myresolver.acme.storage=/letsencrypt/acme.json" #4
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "443:443" #5
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./letsencrypt:/letsencrypt" #6
+  whoami:
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`domainku.com`)"
+      - "traefik.http.routers.whoami.entrypoints=web,websecure" #7
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver" #8
+```
+
+keterangan:
+1. kita tambah SSL entrypoint, listen HTTPS port 443
+2. enable acme challenge utk `myresolver` sbg certificate resolver name
+3. tambahkan email utk LE
+4. path ke file json utk menyimpan certificate
+5. kita expose port 443
+6. kita mount volume certificate di container ke file di localdisk, jadi update traefik tidak perlu mendownload ulang semua cert
+7. tambahkan entrypoint `websecure` ke service sehingga kita bisa akses via HTTP dan HTTPS
+8. kita bertahu traefik utk menggunakan `myresolver` utk mendapat SSL certificate utk service ini.
+
+run `docker-compose up -d` utk me-fetch otomatis certificate & menggunakannya.
+
+kita bisa cek traefik dashboard utk melihat status SSL di router:
+
+![img](https://accesto.com/blog/static/302ad3456a13f6d804a738c97627a828/69476/traefik-ssl-dashboard-view.png)
+
+sekarang kita punya reverse proxy di docker dg SSL termination.
+
+## fitur Middleware
+
+jika kita ingin membuat secure access utk endpoint tertentu. kita bisa gunakan Whitelist ip yg datang atau menggunakan username & password. kita bisa buat di level app (tiap app), tapi disini kita buat di level reverse proxy.
+
+### IP Whitelist
+
+Web app security is key, jadi bagaimana menambahkan ip whitelist? kita tambah 2 labels baru:
+
+```
+      - "traefik.http.middlewares.whoami-filter-ip.ipwhitelist.sourcerange=192.168.1.1/24,127.0.0.1/32"
+      - "traefik.http.routers.whoami.middlewares=whoami-filter-ip"
+```
+
+kita buat middleware dg nama `whoami-filter-ip` (harus uniq). ip yg kita whitelist akan di ijinkan utk akses ke service, sumber ip lain akan mendapat `403 Forbidden`.
+
+### Basic Auth
+
+menambahkan basic auth utk mengamankan web/service.
+
+```
+      - "traefik.http.middlewares.whoami-auth.basicauth.users=test:$$apr1$$ra8uoeq5$$HqiATqC5edVVEXznsNiVV/,test2:$$apr1$$8ol2akty$$BW.Fsa.K3tc1DzcJ6l9ql1"
+      - "traefik.http.routers.whoami.middlewares=whoami-auth"
+```
+
+kita generate user & password di console dg perintah:
+
+```
+echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
+```
+
+![img](https://accesto.com/blog/static/8c2e120c4db68e412ce0f9e544bfbd21/0940f/basic-auth-example.png)
+
+`sed` me-replace single `$` dengan dual `$$` agar docker-compose tidak menganggapnya sbg env variable.
+
+> traefik tidak hanya support HTTP, juga TCP. misal utk database. juga dg built-in middlewares yg berbeda.
+> kita bisa tambah custom headers, rate limiting, redirects, retries, compression, cirtuit breaker, custom error pages etc.
 
 
 
