@@ -25,6 +25,40 @@ curl -s 192.168.1.253:80
 # Ingress : menyediakan beberapa service di IP:Port yg sama, dibedakan oleh HTTP routing rules (e.g hostname & path). external hostname `cluster-01.company.com`, ditambahkan di `/etc/hosts`
 192.168.1.254 oam.cluster-01.company.com cluster-01.company.com
 
+# Contoh service yg diexpose dg ingress
+kubectl expose deployment mynginx --port=80
+cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mysite-nginx-ingress
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
+  spec:
+    rules:
+    - host: "cluster-01.company.com"
+      http:
+        paths:
+        - path: /mynginx
+          pathType: Prefix
+          backend:
+            service:
+              name: mynginx
+              port:
+                number: 80
+EOF
+curl -s http://cluster-01.company.com/mynginx
+
+## Summary
+kubectl get service -o wide -l app=mynginx
+
 
 
 ```
+
+
+
+
+
+
