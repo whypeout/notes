@@ -74,6 +74,19 @@ Daily ChangeLogs:
 
 1. BRI Pulo Gadung, Customer Newton Tidak bisa Sharing Printer. Regedit, Manual Add Port Printer & Add via Hostname.
 
+...
+
+### 07-12-2022
+
+1. Perpindahan Tiang Radio Orion, dari belakang Sales ke samping RM.Lt2
+2. Indihome lemot, 10mbps
+
+### 08-12-2022
+
+1. Listrik PLN Repair, Mati 13.30-14.30
+2. AP Tenda 1 tidak detek, wifi OK semua
+3. Inet Orion Sering disconnect
+
 Good To Read:
 - [https://faun.pub/environment-for-comparing-several-on-premise-kubernetes-distributions-k3s-kind-kubeadm-a53675a80a00](https://faun.pub/environment-for-comparing-several-on-premise-kubernetes-distributions-k3s-kind-kubeadm-a53675a80a00)
   perbandingan on-premise lingkungan kubernetes, k3s (single), kind (1worker,1node) dan kubeadm (vm)..dimana k3s paling ringan dg 7%/2cpu & 1GB/4GB ram dg pemangkasan fitur, kind sedikit lebih berat dengan fitur lebih mendekati native kubernetes, dan kubeadm di vagrant-virtualbox sesuai dokumentasi resmi
