@@ -2,6 +2,7 @@
 
 sources:
 - [https://golb.hplar.ch/2018/10/wireguard-on-amazon-lightsail.html](https://golb.hplar.ch/2018/10/wireguard-on-amazon-lightsail.html)
+- [https://gist.github.com/chrisswanda/88ade75fc463dcf964c6411d1e9b20f4](https://gist.github.com/chrisswanda/88ade75fc463dcf964c6411d1e9b20f4)
 
 # Setup VPS
 
@@ -16,7 +17,13 @@ printf 'Package: *\nPin: release a=unstable\nPin-Priority: 90\n' > /etc/apt/pref
 apt update
 apt install wireguard unbound qrencode curl
 
-# edit nano /etc/sysctl.conf, hapus # didepan net.ipv4.ip_forward
+# atau
+sudo apt-add-repository ppa:wireguard/wireguard
+sudo apt-get update
+sudo apt-get install wireguard
+
+# edit nano /etc/sysctl.conf
+# enable ip forward dg menghapus # didepan net.ipv4.ip_forward
 ```
 
 # Setup WireGuard
@@ -27,10 +34,18 @@ umask 077
 wg genkey | tee server_private.key | wg pubkey > server_public.key
 wg genkey | tee client_private.key | wg pubkey > client_public.key
 
-nano /etc/wireguard/wg0.conf
+# contoh output
+example privatekey - mNb7OIIXTdgW4khM7OFlzJ+UPs7lmcWHV7xjPgakMkQ=
+example publickey - 0qRWfQ2ihXSgzUbmHXQ70xOxDd7sZlgjqGSPA9PFuHg=
 
+# tambahkan presharedkey jika diperlukan, baik di server maupun di client
+# wg genpsk > preshared
+```
+```
+nano /etc/wireguard/wg0.conf
+##########
 [Interface]
-Address = 192.168.2.1
+Address = 192.168.2.1/24
 PrivateKey = server_private_key
 ListenPort = 54321
 SaveConfig = false
@@ -38,8 +53,14 @@ PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o
 PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; iptables -D INPUT -s 192.168.2.0/24 -p udp -m udp --dport 53 -m conntrack --ctstate NEW -j ACCEPT
 
 [Peer]
+# peer 1 => remote tunnel
 PublicKey = client_public_key
 AllowedIPs = 192.168.2.2/32
+
+[Peer]
+# peer 2 => site to site tunnel
+PublicKey = site-to-site-public-key
+AllowedIPs = 192.168.200.0/24
 ```
 ```
 sed -i "s/server_private_key/$(sed 's:/:\\/:g' server_private.key)/" wg0.conf
@@ -57,6 +78,8 @@ ListenPort = 54321
 PublicKey = GXehejiGNxfOk5bEKECYgQg0nM9cu80BxPJap47s3QE=
 AllowedIPs = 192.168.2.2/32
 ```
+
+> iptables interface %i bisa digunakan utk me-refer ke `systemctl start wg-quick@wg0.service`
 
 # Setup DNS server UNBOUND
 
@@ -117,10 +140,11 @@ kita buat config utk client2
 
 ```
 cd /etc/wireguard/
-nano client2
+nano client2.conf
 ```
 
 ```
+########### peer client remote vpn
 [Interface]
 Address = 192.168.2.2/32
 PrivateKey = client_private_key
@@ -129,6 +153,7 @@ MTU = 1280
 
 [Peer]
 PublicKey = server_public_key
+PresharedKey = [presharedkey-jika-ada]
 Endpoint = 54.147.249.172:54321
 AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
@@ -139,11 +164,63 @@ sed -i "s/server_public_key/$(sed 's:/:\\/:g' server_public.key)/" client2
 ```
 generate qrcode utk di scan di client
 ```
-qrencode -t ansiutf8 < client2
+qrencode -t ansiutf8 < client2.conf
 ```
 ![image](https://user-images.githubusercontent.com/89820226/205880161-da3bf4cc-4dc3-4d4f-9153-9cf00210f954.png)
 client android
 ![image](https://user-images.githubusercontent.com/89820226/205880187-fc4bd8bc-ba4a-4428-958b-16c622aa2ebd.png)
+
+
+# Peer Site to Site tunnel
+
+```
+########## peer site to site tunnel
+[Interface]
+Address = 192.168.2.3/32
+PrivateKey = client_private_key
+DNS = 192.168.2.1
+MTU = 1280
+
+[Peer]
+PublicKey = server_public_key
+PresharedKey = [presharedkey-jika-ada]
+Endpoint = 54.147.249.172:54321
+AllowedIPs = 192.168.0.0/24 # network dibelakang server/vps
+PersistentKeepalive = 25
+```
+
+# client connect & check
+
+```
+sudo wg show
+```
+
+# Server command
+
+setiap menambahkan peer, kita perlu me-restart service & interface wireguard agar peer baru bisa terkoneksi
+
+```
+# Start stop interface
+wg-quick up wg0
+wg-quick down wg0
+
+# Start stop services
+sudo systemctl stop wg-quick@wg0.service
+sudo systemctl start wg-quick@wg0.service
+```
+
+alternativ agar tidak perlu me-restart service utk menambahkan client, gunakan wg-tool
+
+```
+# Add Peer
+wg set wg0 peer <client-publickey> allowed-ips 192.168.2.5/32
+
+# Melihat koneksi
+wg
+
+# save ke config
+wg-quick save wg0
+
 
 
 
