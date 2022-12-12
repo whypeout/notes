@@ -222,6 +222,124 @@ CONTAINER ID  IMAGE             COMMAND           CREATED          STATUS       
 ```
 ![img](https://www.bogotobogo.com/DevOps/Docker/images/Docker-Kind-Cluster/k8s-Flask.png)
 
+## Loading/memasukkan image kedalam kind cluster
+
+cek cluster kita
+```
+$ kind get clusters
+kind
+
+$ kubectl config get-contexts
+CURRENT   NAME                    CLUSTER   AUTHINFO           NAMESPACE
+*         kubernetes-admin@kind   kind      kubernetes-admin
+```
+kita build dan push image (non-latest) ke dockerhub:
+```
+$ docker build -t dockerbogo/k8s-flask:v1 .
+$ docker push dockerbogo/k8s-flask:v1
+```
+next kita buat manifest file: flask_deployment.yaml
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+spec:
+  ports:
+    - targetPort: 8787
+      nodePort: 30087
+      port: 80
+  selector:
+    app: flask-app
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+  labels:
+    app: flask
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app-container
+        image: dockerbogo/k8s-flask:v1
+        ports:
+        - containerPort: 8787
+```
+lalu kita deploy ke cluster
+```
+$ kubectl apply -f flask_deployment.yaml
+service/flask-app-service created
+deployment.apps/flask-deployment created
+
+$ kubectl get pods -o wide
+NAME                               READY     STATUS    RESTARTS   AGE       IP          NODE           NOMINATED NODE   READINESS GATES
+flask-deployment-5b44f997c-fbvbq   1/1       Running   0          18m       10.38.0.1   kind-worker    <none>           <none>
+flask-deployment-5b44f997c-ghvv7   1/1       Running   0          18m       10.38.0.2   kind-worker    <none>           <none>
+flask-deployment-5b44f997c-ngp4h   1/1       Running   0          18m       10.32.0.4   kind-worker2   <none>           <none>
+
+$ kubectl get nodes -o wide
+NAME                 STATUS    ROLES     AGE       VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+kind-control-plane   Ready     master    13m       v1.13.4   172.17.0.4    <none>        Ubuntu 18.04.1 LTS   4.9.125-linuxkit   docker://18.6.3
+kind-worker          Ready     <none>    13m       v1.13.4   172.17.0.2    <none>        Ubuntu 18.04.1 LTS   4.9.125-linuxkit   docker://18.6.3
+kind-worker2         Ready     <none>    13m       v1.13.4   172.17.0.3    <none>        Ubuntu 18.04.1 LTS   4.9.125-linuxkit   docker://18.6.3
+
+$ kubectl get svc
+NAME                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+flask-app-service   NodePort    10.96.244.120   <none>        80:30087/TCP   112s
+kubernetes          ClusterIP   10.96.0.1       <none>        443/TCP        14m
+
+$ docker ps
+CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS                                  NAMES
+d9a206e84648        kindest/node:v1.13.4   "/usr/local/bin/entr…"   19 minutes ago      Up 19 minutes       53350/tcp, 127.0.0.1:53350->6443/tcp   kind-control-plane
+9e9204297170        kindest/node:v1.13.4   "/usr/local/bin/entr…"   19 minutes ago      Up 19 minutes                                              kind-worker
+3c9bd9e28ce3        kindest/node:v1.13.4   "/usr/local/bin/entr…"   19 minutes ago      Up 19 minutes                                              kind-worker
+```
+
+## Akses app yg sudah di deploy
+
+utk mengakses service, kita perlu tau Node-IP:nodePort. berikut cara mendapat NodeIP utk service NodePort.
+konek ke worker node:
+```
+$ kubectl run busybox -it --image=busybox --restart=Never --rm
+If you don't see a command prompt, try pressing enter.
+/ # ping 10-32-0-4.default.pod.cluster.local
+PING 10-32-0-4.default.pod.cluster.local (10.32.0.4): 56 data bytes
+64 bytes from 10.32.0.4: seq=0 ttl=64 time=3.982 ms
+64 bytes from 10.32.0.4: seq=1 ttl=64 time=0.349 ms
+64 bytes from 10.32.0.4: seq=2 ttl=64 time=0.319 ms
+```
+me-list pods yg menjalankan app
+```
+$ kubectl get pods --selector="app=flask-app"
+NAME                               READY     STATUS    RESTARTS   AGE
+flask-deployment-5b44f997c-c76cb   1/1       Running   0          8m25s
+flask-deployment-5b44f997c-rrh76   1/1       Running   0          8m25s
+flask-deployment-5b44f997c-rvkf8   1/1       Running   0          8m25s
+```
+cara paling mudah utk mengaksesnya adl dg "port-forwarding":
+```
+$ kubectl port-forward flask-deployment-5b44f997c-c76cb 8787:8787
+Forwarding from 127.0.0.1:8787 -> 8787
+Forwarding from [::1]:8787 -> 8787
+```
+![img](https://www.bogotobogo.com/DevOps/Docker/images/Docker-Kind-Cluster/port-forwarding.png)
+
+## Menghapus KIND cluster
+
+```
+$ unset KUBECONFIG
+$ kind delete cluster
+```
 
 
 
