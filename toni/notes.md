@@ -2,6 +2,15 @@
 
 > List ini belum di test & dokumentasikan
 
+## DevOps
+
+- Ansible & Terraform: AWS [https://www.bogotobogo.com/DevOps/Ansible/Ansible-Terraform-null_resource-local-exec-remote-exec-triggers.php](https://www.bogotobogo.com/DevOps/Ansible/Ansible-Terraform-null_resource-local-exec-remote-exec-triggers.php)
+- Ansible Modules [https://www.bogotobogo.com/DevOps/Ansible/Ansible-Modules.php](https://www.bogotobogo.com/DevOps/Ansible/Ansible-Modules.php)
+- Ansible Playbooks [https://www.bogotobogo.com/DevOps/Ansible/Ansible-Playbooks.php](https://www.bogotobogo.com/DevOps/Ansible/Ansible-Playbooks.php)
+- Ansible Handlers [https://www.bogotobogo.com/DevOps/Ansible/Ansible-Handlers.php](https://www.bogotobogo.com/DevOps/Ansible/Ansible-Handlers.php)
+- Ansible Roles [https://www.bogotobogo.com/DevOps/Ansible/Ansible-Roles.php](https://www.bogotobogo.com/DevOps/Ansible/Ansible-Roles.php)
+- Ansible Deploy GoApp to MiniKube [https://www.bogotobogo.com/DevOps/Ansible/Ansible-Deploying-a-Go-App-to-Minikube.php](https://www.bogotobogo.com/DevOps/Ansible/Ansible-Deploying-a-Go-App-to-Minikube.php)
+
 ## Kubernetes
 - Kind utk Kubernetes test PR : [https://mauilion.dev/posts/kind-k8s-testing/](https://mauilion.dev/posts/kind-k8s-testing/)
 
