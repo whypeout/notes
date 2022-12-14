@@ -39,6 +39,29 @@ qemu-img resize chr1.img +30G
 - CHR SNMP [https://help.mikrotik.com/docs/display/ROS/SNMP](https://help.mikrotik.com/docs/display/ROS/SNMP)
 - Custom Rate-Limit (Upto) [https://www.o-om.com/2020/06/optimasi-custom-rate-limit-yang-sesuai.html](https://www.o-om.com/2020/06/optimasi-custom-rate-limit-yang-sesuai.html)
 - Queue HTB Parent-Child [https://simpony.web.id/2020/11/fakta-menarik-pada-queue-winbox-mikrotik.html](https://simpony.web.id/2020/11/fakta-menarik-pada-queue-winbox-mikrotik.html)
+- REST API with AXIOS Javascript [https://github.com/renomureza/ros-rest](https://github.com/renomureza/ros-rest)
+- DNS over HTTPS cloudflare [https://jcutrer.com/howto/networking/mikrotik/mikrotik-dns-over-https](https://jcutrer.com/howto/networking/mikrotik/mikrotik-dns-over-https)
+```
+/ip dns static
+add name=cloudflare-dns.com address=104.16.248.249
+add name=cloudflare-dns.com address=104.16.249.249
+add name=dns.google address=8.8.8.8
+add name=dns.google address=8.8.4.4
+/ip dns set servers=8.8.8.8,8.8.4.4
+/ip dns set use-doh-server=https://cloudflare-dns.com/dns-query verify-doh-cert=yes
+/logging add topics=dns,debug
+/tool torch interface=wan enable=src-addr,dst-addr,port,protocol filter=port=443
+```
+- RouterOS Recovery Password from Backup File [https://jcutrer.com/howto/networking/mikrotik/recover-routeros-passwords-from-backup](https://jcutrer.com/howto/networking/mikrotik/recover-routeros-passwords-from-backup)
+```
+python3 -V
+mkdir rostest && cd rostest
+git clone https://github.com/BigNerd95/RouterOS-Backup-Tools.git
 
+virtualenv ./env
+source ./venv/Scripts/activate
+pip install pycryptodome
 
-
+python RouterOS-Backup-Tools/ROSbackup.py unpack myrouter.backup -d myrouter
+python RouterOS-Backup-Tools/extract_user.py myrouter/user.dat
+```
