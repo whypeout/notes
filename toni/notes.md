@@ -37,7 +37,8 @@ qemu-img resize chr1.img +30G
 - CHR RouterOS [https://help.mikrotik.com/docs/pages/viewpage.action?pageId=18350234](https://help.mikrotik.com/docs/pages/viewpage.action?pageId=18350234)
 - IoT MQTT Telemetry [https://help.mikrotik.com/docs/display/UM/MQTT+and+ThingsBoard+configuration](https://help.mikrotik.com/docs/display/UM/MQTT+and+ThingsBoard+configuration)
 - CHR SNMP [https://help.mikrotik.com/docs/display/ROS/SNMP](https://help.mikrotik.com/docs/display/ROS/SNMP)
-- 
+- Custom Rate-Limit (Upto) [https://www.o-om.com/2020/06/optimasi-custom-rate-limit-yang-sesuai.html](https://www.o-om.com/2020/06/optimasi-custom-rate-limit-yang-sesuai.html)
+- Queue HTB Parent-Child [https://simpony.web.id/2020/11/fakta-menarik-pada-queue-winbox-mikrotik.html](https://simpony.web.id/2020/11/fakta-menarik-pada-queue-winbox-mikrotik.html)
 
 
 
