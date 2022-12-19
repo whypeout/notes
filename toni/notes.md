@@ -17,11 +17,15 @@
 ## Docker 
 - Serba Serbi [https://gulaliit.medium.com/install-command-docker-application-77ae1b85af39](https://gulaliit.medium.com/install-command-docker-application-77ae1b85af39)
 
+---
+
 ## TMUX
 - Kostumize TMUX [https://www.hamvocke.com/blog/a-guide-to-customizing-your-tmux-conf/](https://www.hamvocke.com/blog/a-guide-to-customizing-your-tmux-conf/)
 - Setup Terminal dg ZSH TMUX [https://dev.to/andrenbrandao/terminal-setup-with-zsh-tmux-dracula-theme-48lm](https://dev.to/andrenbrandao/terminal-setup-with-zsh-tmux-dracula-theme-48lm)
 - Navigate TMUX [https://dev.to/waylonwalker/how-i-navigate-tmux-in-2021-2ina](https://dev.to/waylonwalker/how-i-navigate-tmux-in-2021-2ina)
-- 
+
+
+---
 
 ## MikroTik
 
@@ -65,3 +69,23 @@ pip install pycryptodome
 python RouterOS-Backup-Tools/ROSbackup.py unpack myrouter.backup -d myrouter
 python RouterOS-Backup-Tools/extract_user.py myrouter/user.dat
 ```
+
+---
+
+## Synology NAS
+
+- Synology NAS via WebDAV [https://kb.synology.com/en-global/DSM/tutorial/How_to_access_files_on_Synology_NAS_with_WebDAV](https://kb.synology.com/en-global/DSM/tutorial/How_to_access_files_on_Synology_NAS_with_WebDAV)
+- Synology NAS :: Web Station :: Hosting Website Wordpress [https://kb.synology.com/en-global/DSM/tutorial/How_to_host_a_website_on_Synology_NAS](https://kb.synology.com/en-global/DSM/tutorial/How_to_host_a_website_on_Synology_NAS)
+- NodeJS on Synology NAS [https://github.com/StephanThierry/nodejs4synologynas](https://github.com/StephanThierry/nodejs4synologynas)
+
+
+---
+
+## KODI XBMC ELEC
+
+- KODI xbmc [https://github.com/xbmc/xbmc](https://github.com/xbmc/xbmc)
+- KODI TV [https://kodi.tv/](https://kodi.tv/)
+- LibreElec TV [https://github.com/LibreELEC/LibreELEC.tv](https://github.com/LibreELEC/LibreELEC.tv)
+- EmuELEC [https://github.com/EmuELEC/EmuELEC](https://github.com/EmuELEC/EmuELEC)
+- CoreELEC [https://github.com/CoreELEC/CoreELEC](https://github.com/CoreELEC/CoreELEC)
+- RetroPie Setup Arch [https://github.com/RetroPie](https://github.com/RetroPie)
