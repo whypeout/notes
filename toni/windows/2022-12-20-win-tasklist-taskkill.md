@@ -46,7 +46,22 @@ tasklist /fi "services eq webclient"
 ## TaskKill command
 
 ```
-# 
+# kill berdasarkan nama file
+taskkill /IM filename.exe
+taskkill /IM vboxgui.exe
+
+# kill app force
+taskkill /IM /F iexplore.exe
+taskkill /IM /F explorer.exe
+
+# kill process id
+taskkill /PID 1234
+
+# kill process high mem in KB. 100000 = 100MB
+taskkill /FI "memusage gt KB"
+taskkill /FI "memusage gt 100000"
+
+
 ```
 
 
