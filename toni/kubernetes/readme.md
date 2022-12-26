@@ -3,6 +3,43 @@
 ## BITNAMI
 
 - github bitnami containers [https://github.com/bitnami/containers](https://github.com/bitnami/containers)
+- hub docker bitnami [https://hub.docker.com/u/bitnami](https://hub.docker.com/u/bitnami)
+- alertmanager [https://github.com/bitnami/containers/tree/main/bitnami/alertmanager](https://github.com/bitnami/containers/tree/main/bitnami/alertmanager)
+- apache [https://github.com/bitnami/containers/tree/main/bitnami/apache](https://github.com/bitnami/containers/tree/main/bitnami/apache)
+- argo-cd [https://github.com/bitnami/containers/tree/main/bitnami/argo-cd](https://github.com/bitnami/containers/tree/main/bitnami/argo-cd)
+- cert-manager [https://github.com/bitnami/containers/tree/main/bitnami/cert-manager](https://github.com/bitnami/containers/tree/main/bitnami/cert-manager)
+- codeigniter [https://github.com/bitnami/containers/tree/main/bitnami/codeigniter](https://github.com/bitnami/containers/tree/main/bitnami/codeigniter)
+- gitea [https://github.com/bitnami/containers/tree/main/bitnami/gitea](https://github.com/bitnami/containers/tree/main/bitnami/gitea)
+- memcached [https://github.com/bitnami/containers/tree/main/bitnami/memcached](https://github.com/bitnami/containers/tree/main/bitnami/memcached)
+- metrics-server [https://github.com/bitnami/containers/tree/main/bitnami/metrics-server](https://github.com/bitnami/containers/tree/main/bitnami/metrics-server)
+- mongodb [https://github.com/bitnami/containers/tree/main/bitnami/mongodb](https://github.com/bitnami/containers/tree/main/bitnami/mongodb)
+- mysql [https://github.com/bitnami/containers/tree/main/bitnami/mysql](https://github.com/bitnami/containers/tree/main/bitnami/mysql)
+- minio [https://github.com/bitnami/containers/tree/main/bitnami/minio](https://github.com/bitnami/containers/tree/main/bitnami/minio)
+- nginx [https://github.com/bitnami/containers/tree/main/bitnami/nginx](https://github.com/bitnami/containers/tree/main/bitnami/nginx)
+- rabbitmq [https://github.com/bitnami/containers/tree/main/bitnami/rabbitmq](https://github.com/bitnami/containers/tree/main/bitnami/rabbitmq)
+- openldap [https://github.com/bitnami/containers/tree/main/bitnami/openldap](https://github.com/bitnami/containers/tree/main/bitnami/openldap)
+- phpmyadmin [https://github.com/bitnami/containers/tree/main/bitnami/phpmyadmin](https://github.com/bitnami/containers/tree/main/bitnami/phpmyadmin)
+- rclone [https://github.com/bitnami/containers/tree/main/bitnami/rclone](https://github.com/bitnami/containers/tree/main/bitnami/rclone)
+- redis [https://github.com/bitnami/containers/tree/main/bitnami/redis](https://github.com/bitnami/containers/tree/main/bitnami/redis)
+- redmine [https://github.com/bitnami/containers/tree/main/bitnami/redmine](https://github.com/bitnami/containers/tree/main/bitnami/redmine)
+- node [https://github.com/bitnami/containers/tree/main/bitnami/node](https://github.com/bitnami/containers/tree/main/bitnami/node)
+- wordpress [https://github.com/bitnami/containers/tree/main/bitnami/wordpress](https://github.com/bitnami/containers/tree/main/bitnami/wordpress)
+- wordpress-nginx [https://github.com/bitnami/containers/tree/main/bitnami/wordpress-nginx](https://github.com/bitnami/containers/tree/main/bitnami/wordpress-nginx)
+- telegraf [https://github.com/bitnami/containers/tree/main/bitnami/telegraf](https://github.com/bitnami/containers/tree/main/bitnami/telegraf)
+- prometheus [https://github.com/bitnami/containers/tree/main/bitnami/prometheus](https://github.com/bitnami/containers/tree/main/bitnami/prometheus)
+- promtail [https://github.com/bitnami/containers/tree/main/bitnami/promtail](https://github.com/bitnami/containers/tree/main/bitnami/promtail)
+- redis exporter [https://github.com/bitnami/containers/tree/main/bitnami/redis-exporter](https://github.com/bitnami/containers/tree/main/bitnami/redis-exporter)
+- prometheus - apache exporter [https://github.com/bitnami/containers/tree/main/bitnami/apache-exporter](https://github.com/bitnami/containers/tree/main/bitnami/apache-exporter)
+- node-exporter [https://github.com/bitnami/containers/tree/main/bitnami/node](https://github.com/bitnami/containers/tree/main/bitnami/node-exporter)
+- mongodb-exporter [https://github.com/bitnami/containers/tree/main/bitnami/mongodb-exporter](https://github.com/bitnami/containers/tree/main/bitnami/mongodb-exporter)
+- nginx exporter [https://github.com/bitnami/containers/tree/main/bitnami/nginx-exporter](https://github.com/bitnami/containers/tree/main/bitnami/nginx-exporter)
+- memcached-exporter [https://github.com/bitnami/containers/tree/main/bitnami/memcached-exporter](https://github.com/bitnami/containers/tree/main/bitnami/memcached-exporter)
+- grafana loki [https://github.com/bitnami/containers/tree/main/bitnami/grafana-loki](https://github.com/bitnami/containers/tree/main/bitnami/grafana-loki)
+- grafana [https://github.com/bitnami/containers/tree/main/bitnami/grafana](https://github.com/bitnami/containers/tree/main/bitnami/grafana)
+- influxdb [https://github.com/bitnami/containers/tree/main/bitnami/influxdb](https://github.com/bitnami/containers/tree/main/bitnami/influxdb)
+- jenkins [https://github.com/bitnami/containers/tree/main/bitnami/jenkins](https://github.com/bitnami/containers/tree/main/bitnami/jenkins)
+- laravel [https://github.com/bitnami/containers/tree/main/bitnami/laravel](https://github.com/bitnami/containers/tree/main/bitnami/laravel)
+- mariadb [https://github.com/bitnami/containers/tree/main/bitnami/mariadb](https://github.com/bitnami/containers/tree/main/bitnami/mariadb)
 - wordpress nginx [https://hub.docker.com/r/bitnami/wordpress-nginx/](https://hub.docker.com/r/bitnami/wordpress-nginx/)
 
 ```
@@ -137,5 +174,35 @@ docker run -d -p 3000:3000 getting-started
 
 # open with browser http://localhost:3000
 
+# CLI
+docker exec wordpress wp help
+docker-compose exec wordpress wp help
+
+# Logging
+docker logs wordpress
+docker-compose logs wordpress
+
+# Maintenance
+## Backup Container
+docker stop wordpress
+docker-compose stop wordpress
+docker run --rm -v /backup/wp/date:/backups --volumes-from wordpress busybox \
+cp -a /bitnami/wordpress /backups/latest
+
+## Restore Container
+docker run -d --name mariadb \
+- -v /path/mariadb-persistent:/bitnami/mariadb
++ -v /path/mariadb/latest:/bitnami/mariadb
+
+docker run -d --name wordpress \
+- -v /path/wordpress-persistent:/bitnami/wordpress
++ -v /path/wordpress/latest:/bitnami/wordpress
+
+## Upgrade
+docker pull bitnami/wordpress-nginx:latest
+docker-compose stop wordpress
+#backup current container state
+docker-compose rm -v wordpress
+docker-compose up -d
 
 ```
