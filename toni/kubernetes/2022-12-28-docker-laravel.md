@@ -2,12 +2,21 @@
 sources: [https://www.digitalocean.com/community/tutorials/how-to-install-and-set-up-laravel-with-docker-compose-on-ubuntu-20-04](https://www.digitalocean.com/community/tutorials/how-to-install-and-set-up-laravel-with-docker-compose-on-ubuntu-20-04)
 
 ## 1. download demo app
-demo app: 
+
 ```sh
-cd ~ && curl -L https://github.com/do-community/travellist-laravel-demo/archive/tutorial-1.0.1.zip -o travellist.zip
-sudo apt update && sudo apt install unzip && unzip travellist.zip && move travellist-laravel-demo* travellist-demo && cd travellist-demo && cp .env.example .env && nano .env
+cd ~ && \
+curl -L https://github.com/do-community/travellist-laravel-demo/archive/tutorial-1.0.1.zip -o travellist.zip
+sudo apt update && \
+sudo apt install unzip && \
+unzip travellist.zip && \
+move travellist-laravel-demo* travellist-demo && \
+cd travellist-demo && \
+cp .env.example .env && \
+nano .env
 ```
-## 2. env
+
+## 2. dotenv
+
 ```dotenv
 APP_NAME=Travellist 
 APP_ENV=dev
@@ -24,33 +33,58 @@ DB_DATABASE=travellist
 DB_USERNAME=travellist_user
 DB_PASSWORD=password
 ```
-## 3.dockerfile
+
+## 3. demo app dockerfile
+
+kita perlu user baru utk menjalankan `artisan` dan `composer`.
+`uid` membuat user didalam container sama dg uid sistem kita, agar permission didalam host sama dg didalam container.
+
 ```dockerfile
+# base image
 FROM php:7.4-fpm
+
+# args dari docker-compose
 ARG user
 ARG uid
+
+# update & install pkg
 RUN apt update && apt install -y git curl \
     libpng-dev libonig-dev libxml2-dev zip unzip
+
+# clean pkg
 RUN apt clean && rm -rf /var/lib/apt/lists/*
+
+# install & enable ext
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# install composer dari image composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# add new user to www-data and root
 RUN useradd -G www-data,root -u $uid -d /home/$user $user
-RUN mkdir -p /home/$user/.composer && chown -R $user:$user /home/$user 
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user 
 WORKDIR /var/www
 USER $user 
 ```
-## setup nginx config & database dump files
-```bash
+
+## 4. setup nginx config & database dump files
+
+buat konfig utk nginx
+
+```
 mkdir -p docker-compose/nginx
 nano docker-compose/nginx/travellist.conf
 ```
-```conf
+
+```
 server {
     listen 80;
     index index.php index.html;
     error_log /var/log/nginx/error.log;
     access_log /var/log/nginx/access.log;
     root /var/www/public;
+    
     location ~ \.php$ {
         try_files $uri =404;
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
@@ -60,28 +94,43 @@ server {
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_param PATH_INFO $fastcgi_path_info;
     }
+    
     location / {
         try_files $uri $uri/ /index.php?$query_string;
         gzip_static on;
     }
 }
 ```
+
+buat file sql yg akan diimport ketika membuat container mysql db
 ```
 mkdir docker-compose/mysql
 nano docker-compose/mysql/init_db.sql
 ```
+
 ```sql
 DROP TABLE IF EXISTS `places`;
-CREATE TABLE places (id bigint(20) unsigned NOT NULL AUTO_INCREMENT, name varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL, visited tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (id)) ENGINE=innoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-INSERT INTO places (name,visited) VALUES('Berlin',0),('Budapest',0),('Cincinnati',1),('Denver',0),('Helsinki',0),('Lisbon',0),('Moscow',1),('Nairobi',0),('Oslo',1),('Rio',0),('Tokyo',0);
+
+CREATE TABLE `places` (
+    `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `visited` tinyint(1) NOT NULL DEFAULT '0',
+    PRIMARY KEY (id)
+) ENGINE=innoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO places (name,visited) VALUES ('Berlin',0), ('Budapest',0), ('Cincinnati',1), ('Denver',0), ('Helsinki',0), ('Lisbon',0), ('Moscow',1), ('Nairobi',0), ('Oslo',1), ('Rio',0), ('Tokyo',0);
 ```
+
 ## 5.multi container env with docker-compose
+
 ```yaml
 # nano docker-compose.yml
 version: "3.7"
+
 networks:
   travellist:
     driver: bridge
+
 services:
   app:
     build:
@@ -98,6 +147,7 @@ services:
       - ./:/var/www
     networks:
       - travellist
+
   db:
     image: mysql:5.7
     container_name: travellist-db
@@ -113,6 +163,7 @@ services:
       - ./docker-compose/mysql:/docker-entrypoint-initdb.d
     networks:
       - travellist
+
   nginx:
     image: nginx:1.17-alpine
     container_name: travellist-nginx
@@ -125,6 +176,10 @@ services:
     networks:
       - travellist
 ```
+
+
+## After
+
 ```
 docker-compose build app
 docker-compose up -d
