@@ -176,20 +176,56 @@ services:
     networks:
       - travellist
 ```
+keterangan: services `app`
+- `build` perintahkan docker-compose utk melakukan build Dockerfile pada path (context) menjadi local image. inject args `user` dan `uid` kedalam Dockerfile saat build image
+- `image` nama image yg akan dibuild
+- `container_name` nama container utk service ini
+- `restart`, selalu restart, kecuali service di stop
+- `working_dir` default working dir utk service di `/var/www`
+- `volumes` buat volume bind-mount local dir `./` ke `/var/www` didalam container
+- `networks` buat service menggunakan network `travellist`
 
+secara default, docker-compose menggunakan `.env` pada dir yg sama dg `docker-compose.yml`.
+services `db` database mysql
+- `image` pull dari docker hub
+- `environment` ambil dari file `.env`
+- `volumes` bind-mount dir tempat dump `.sql` yg akan digunakan utk meng-inisiasi database. image mysql akan mengimport `sql` file didalam folder `/docker-entrypoint-initdb.d/`
+
+services `nginx`
+- `image` pull dari docker hub
+- `ports` akses external `8000` ke port internal docker `80`
+- `volumes` sinkron `./` ke `/var/www` didalam container. dan config nginx di `/etc/nginx/conf.d/travellist.conf`
 
 ## After
 
 ```
+# build image
 docker-compose build app
+
+# jalankan semua service / stack
 docker-compose up -d
+
+# melihat service yg berjalan
 docker-compose ps
+
+# run cmd didalam container, list file di workdir /var/www
 docker-compose exec app ls -l
+
+# install composer
 docker-compose exec app composer install
+
+# generate uniq app key
 docker-compose exec app php artisan key:generate
+
 # curl http://domain-ip:8000
+
+# melihat log services
 docker-compose logs nginx
+
+# pause dan unpause
 docker-compose pause
 docker-compose unpause
+
+# menghapus semua container services
 docker-compose down
 ```
