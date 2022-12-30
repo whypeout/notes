@@ -51,6 +51,7 @@ docker run --rm -it -p 9000:80 username/laravel-demo
 docker push username/laravel-demo
 ```
 
+---
 
 # Docker compose style
 
@@ -135,10 +136,75 @@ USER www
 EXPOSE 9000
 CMD ["php-fpm"]
 ```
+## Konfigurasi PHP, MySQL dan NGINX utk Laravel
+```
+mkdir laravel/php
+nano laravel/php/local.ini
 
+#tambahkan baris ini
+# upload_max_filesize=40M
+# post_max_size=40M
 
+mkdir -p laravel/nginx/conf.d
+nano laravel/nginx/conf.d/app.conf
+#tambahkan baris ini
+server {
+  listen 80;
+  index index.php index.html;
+  error_log /var/log/nginx/error.log;
+  access_log /var/log/nginx/access.log;
+  root /var/www/public;
+  location ~ \.php$ {
+    try_files $uri =404;
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+    fastcgi_pass app:9000;
+    fastcgi_index index.php;
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_param PATH_INFO $fastcgi_path_info;
+  }
+  location / {
+    try_files $uri $uri/ /index.php?$query_string;
+    gzip_static on;
+  }
+}
 
+mkdir laravel/mysql
+nano laravel/mysql/my.cnf
+#tambahkan berikut
+[mysqld]
+general_log = 1
+general_log_file = /var/lib/mysql/general.log
+```
+## Deploy Laravel dg NGINX & MySQL Services
 
+```
+cp .env.example .env
+docker-compose up -d
+docker ps
+```
+
+## Konfigurasi laravel container
+
+```
+docker-compose exec app nano .env
+#ubah bagian berikut
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=laravel
+DB_PASSWORD=password
+
+# generate laravel application key & clear cache
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan config:cache
+
+# migrate database
+docker-compose exec app php artisan migrate
+```
+## Akses laravel web interface
+buka browser ke `http://alamat-ip-server`
 
 
 
